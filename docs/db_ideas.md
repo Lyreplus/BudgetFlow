@@ -71,4 +71,12 @@ CREATE TABLE Progetto_Utenti (
     user_id BIGINT NOT NULL REFERENCES Utenti(user_id) ON DELETE CASCADE
 );
 
+CREATE TABLE Transactions (
+    id SERIAL PRIMARY KEY,
+    job_id BIGINT NOT NULL REFERENCES Job(job_id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL REFERENCES Utenti(user_id) ON DELETE CASCADE,
+    amount BIGINT NOT NULL,
+    tempo TIMESTAMP NOT NULL
+);
+
 ```
