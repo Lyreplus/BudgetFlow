@@ -52,7 +52,7 @@ function slurm_job_submit(job_desc, part_list, submit_uid)
     time_limit = job_desc.time_limit
     user_id = submit_uid
 
-    cmd = string.format("python3 ../budgetflow/main.py %d %d %d %d %d %d %d", time_limit, user_id, job_desc.max_nodes,
+    cmd = string.format("python3 ../budgetflow/prolog.py %d %d %d %d %d %d %d", time_limit, user_id, job_desc.max_nodes,
         job_desc.num_tasks,
         job_desc.cpus_per_task,
         num_gpu, num_cpu)

@@ -2,6 +2,7 @@ from utils.database_utils import find_progetto_by_id, is_user_in_project, execut
 import sys
 import psycopg2
 import os
+import json
 
 
 def slurm_init():
@@ -25,6 +26,8 @@ def job_submit_filter(time_limit, user_id, progetto_id, job_id):
         return False, "Project has no budget"
     budget = records[0][2]
     # check if the project has enough budget
+    # TODO change this if, the budget might not been based only on time but more on a function 
+    # of the resource coefficient for the requested resource
     if budget < time_limit:
         return False, "Project has not enough budget"
     else:
@@ -149,6 +152,22 @@ if __name__ == "__main__":
     if not is_user_in_project(user_id, progetto_id):
         print("Utente non autorizzato")
         sys.exit(1)
+
+    # job detail file creation
+    file_name = "job_" + str(job_id) + ".txt"
+    try:
+        file = open(file_name, "x")
+    except FileExistsError:
+        print("Il job inviato ha un id non valido")
+
+
+    with open(file_name, "w") as file:
+        job_data = {
+                "job_id:" : job_id,
+                "num_gpu" : num_gpu,
+                "num_cpu" : num_cpu
+        }
+        json.dump(job_data,file,indent=4)
 
     result, msg = job_submit_filter(time_limit, user_id, progetto_id, job_id)
     if not result:
