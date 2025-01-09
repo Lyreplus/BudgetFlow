@@ -3,6 +3,7 @@ import sys
 import psycopg2
 import os
 import json
+import pyslurm
 
 
 def slurm_init():
@@ -26,7 +27,7 @@ def job_submit_filter(time_limit, user_id, progetto_id, job_id):
         return False, "Project has no budget"
     budget = records[0][2]
     # check if the project has enough budget
-    # TODO change this if, the budget might not been based only on time but more on a function 
+    # TODO  change this if, the budget might not been based only on time but more on a function 
     # of the resource coefficient for the requested resource
     if budget < time_limit:
         return False, "Project has not enough budget"

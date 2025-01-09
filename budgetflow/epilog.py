@@ -40,7 +40,9 @@ def execute_payment(job_id, expected_time):
     # get slurm start and end time
     start_time = utils.utils.get_env_var('SLURM_JOB_START_TIME') 
     end_time =  utils.utils.get_env_var('SLURM_JOB_END_TIME')
-
+    # TODO implement query to get budget
+    budget = 0
+    cost = 0
 
     if expected_time == None or len(expected_time) == 0:
         print("Expected time not found")
@@ -49,6 +51,7 @@ def execute_payment(job_id, expected_time):
     # job finished
     if start_time is not None and end_time is not None:
         actual_time = end_time - start_time
+        
         if expected_time != actual_time:
             # query = "INSERT INTO Job (costo_submit, costo_effettivo, job_id_slurm) VALUES (%s, %s, %s)"
             # dbutil.execute_query(query, (expected_time, actual_time, job_id))
@@ -76,9 +79,11 @@ def execute_payment(job_id, expected_time):
 
                 cost = gpu_cost * num_gpu_req + cpu_cost * num_cpu_req
                 
+                if cost is None:
+                    cost = 0
 
     # TODO: implement payment calculation
-    # budget -= time_limit
+    budget = budget - cost
     # query = "UPDATE Budget SET amount = %s WHERE progetto_id = %s AND tempo_fine IS NULL"
     # dbutil.execute_query(query, (budget, progetto_id))
 
