@@ -1,0 +1,5 @@
+{
+    "gpu_cost": 4.00,
+    "cpu_cost": 1.00,
+    "ram_cost": 0.10,
+}

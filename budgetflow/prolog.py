@@ -3,7 +3,6 @@ import sys
 import psycopg2
 import os
 import json
-import pyslurm
 
 
 def slurm_init():
@@ -19,9 +18,20 @@ def slurm_fini():
     return
 
 
-def job_submit_filter(time_limit, user_id, progetto_id, job_id):
+def job_cost(time_limit: int, num_gpu: int, num_cpu: int) -> int:
+    job_cost = time_limit * (num_gpu * 100 + num_cpu * 10)
+    return job_cost
+
+"""
+@:param time_limit: 
+@:param user_id: the user that submit the job
+@:param progetto_id: the project id
+@:param job_id: the job id
+@:return: True if the job can be submitted, False otherwise
+"""
+def job_submit_filter(job_cost, user_id, progetto_id, job_id):
     # enough budget ?
-    query = "SELECT * FROM Budget WHERE progetto_id = %s AND tempo_fine IS NULL"
+    query : str = "SELECT * FROM Budget WHERE progetto_id = %s AND tempo_fine IS NULL"
     records = execute_query(query, (progetto_id,))
     if len(records) == 0:
         return False, "Project has no budget"
@@ -29,7 +39,7 @@ def job_submit_filter(time_limit, user_id, progetto_id, job_id):
     # check if the project has enough budget
     # TODO  change this if, the budget might not been based only on time but more on a function 
     # of the resource coefficient for the requested resource
-    if budget < time_limit:
+    if budget < job_cost:
         return False, "Project has not enough budget"
     else:
 
@@ -138,18 +148,32 @@ if __name__ == "__main__":
     cpus_per_task = int(sys.argv[5])
     num_gpu = int(sys.argv[6])
     num_cpu = int(sys.argv[7])
-    
+    database_init()
+
+
     job_id = int(os.getenv('SLURM_JOB_ID', -1))
     if job_id == -1:
         print("Job id not found")
         sys.exit(1)
 
-    print("Inserisci l'id del progetto")
-    progetto_id = int(input())
-    progetto = find_progetto_by_id(progetto_id)
-    if len(progetto) == 0:
-        print("Progetto non trovato")
+
+    #check to which project the user belongs
+    
+    project_list = execute_query("SELECT progetto_id FROM Progetto_Utenti WHERE user_id = %s", (user_id,)) 
+    if len(project_list) == 0:
+        print("Utente non autorizzato")
         sys.exit(1)
+    print("Inserisci l'id del progetto")
+    
+    #select the project, make sure the project is valid
+    progetto_id = int(input())
+
+    if progetto_id not in project_list:
+        print("Progetto non valido")
+        sys.exit(1)
+
+
+    progetto = find_progetto_by_id(progetto_id)
     if not is_user_in_project(user_id, progetto_id):
         print("Utente non autorizzato")
         sys.exit(1)
@@ -170,7 +194,8 @@ if __name__ == "__main__":
         }
         json.dump(job_data,file,indent=4)
 
-    result, msg = job_submit_filter(time_limit, user_id, progetto_id, job_id)
+    job_c = job_cost(time_limit, num_gpu, num_cpu)
+    result, msg = job_submit_filter(job_c, user_id, progetto_id, job_id)
     if not result:
         print(msg)
         sys.exit(1)

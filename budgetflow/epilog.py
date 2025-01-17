@@ -4,13 +4,12 @@ import os
 import sys
 import json
 
-
-def get_job_id():
+def get_job_id() -> int:
     job_id_slurm = os.getenv('SLURM_JOB_ID')
     query = "SELECT job_id FROM Job WHERE job_id_slurm = %s"
     job_id = dbutil.execute_query(query, (job_id_slurm,))
     if len(job_id) == 0:
-        return None
+        return -1
     return job_id[0][0]
 
 def read_resource_coefficients():
@@ -90,7 +89,7 @@ def execute_payment(job_id, expected_time):
     return
 
 
-def end_job(job_id):
+def end_job(job_id: int):
     exit_code = os.getenv('SLURM_EXIT_CODE', -1)
     expected_time = dbutil.execute_query("SELECT costo_submit FROM Job WHERE job_id_slurm = %s", (job_id))
     if expected_time == None or len(expected_time) == 0:
@@ -110,6 +109,9 @@ def end_job(job_id):
 
 if __name__ == "__main__":
     job_id = get_job_id()
+    if job_id == -1:
+        print("Job id not found")
+        sys.exit(1)
     expected_time, exit_code = end_job(job_id)
     if exit_code != 0:
         sys.exit(exit_code)

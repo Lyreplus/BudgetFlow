@@ -8,6 +8,7 @@ def worker():
         job_id = job_queue.get()
         if job_id is None:
             break
+        # job_esecution
         fetch_and_save_job_details(job_id)
         job_queue.task_done()
 
