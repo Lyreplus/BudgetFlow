@@ -3,6 +3,7 @@ import sys
 import psycopg2
 import os
 import json
+from typing import List, Tuple
 
 
 def slurm_init():
@@ -18,9 +19,10 @@ def slurm_fini():
     return
 
 
-def job_cost(time_limit: int, num_gpu: int, num_cpu: int) -> int:
-    job_cost = time_limit * (num_gpu * 100 + num_cpu * 10)
+def job_cost(time_limit: int, num_gpu: int, num_cpu: int, gpu_coefficient : float = 100.0, cpu_coefficient : float = 10.0) -> float:
+    job_cost = time_limit * (num_gpu * gpu_coefficient + num_cpu * cpu_coefficient)
     return job_cost
+
 
 """
 @:param time_limit: 
@@ -29,16 +31,14 @@ def job_cost(time_limit: int, num_gpu: int, num_cpu: int) -> int:
 @:param job_id: the job id
 @:return: True if the job can be submitted, False otherwise
 """
-def job_submit_filter(job_cost, user_id, progetto_id, job_id):
+def job_submit_filter(job_cost: float, progetto_id: str, job_id: str) -> Tuple[bool, str]:
     # enough budget ?
     query : str = "SELECT * FROM Budget WHERE progetto_id = %s AND tempo_fine IS NULL"
-    records = execute_query(query, (progetto_id,))
+    records : List= execute_query(query, progetto_id)
     if len(records) == 0:
         return False, "Project has no budget"
-    budget = records[0][2]
-    # check if the project has enough budget
-    # TODO  change this if, the budget might not been based only on time but more on a function 
-    # of the resource coefficient for the requested resource
+    budget : float = float(records[0][2])
+
     if budget < job_cost:
         return False, "Project has not enough budget"
     else:
@@ -50,10 +50,11 @@ def job_submit_filter(job_cost, user_id, progetto_id, job_id):
 
 
 def check_resources(max_nodes, num_tasks, cpus_per_task, num_gpu, num_cpu):
-    # TODO: check if the request resources are available
+    #TODO: check if the request resources are available
     return
 
-def database_init():
+
+def database_init() -> None:
     query = """
         CREATE TABLE IF NOT EXISTS Progetto (
                 progetto_id BIGINT PRIMARY KEY,
@@ -136,37 +137,39 @@ def database_init():
     conn = psycopg2.connect("dbname=BudgetFlow user=postgres")
     cursor = conn.cursor()
     cursor.execute(query)
-    records = cursor.fetchall()
+    #TODO  can be useful to check the returned value when creating table?
+    # records = cursor.fetchall()
     return
 
 
 if __name__ == "__main__":
-    time_limit = int(sys.argv[1])
-    user_id = int(sys.argv[2])
-    max_nodes = int(sys.argv[3])
-    num_tasks = int(sys.argv[4])
-    cpus_per_task = int(sys.argv[5])
-    num_gpu = int(sys.argv[6])
-    num_cpu = int(sys.argv[7])
+    time_limit : int = int(sys.argv[1])
+    user_id : str = str(sys.argv[2])
+    max_nodes : int = int(sys.argv[3])
+    num_tasks : int = int(sys.argv[4])
+    cpus_per_task : int= int(sys.argv[5])
+    num_gpu : int = int(sys.argv[6])
+    num_cpu : int = int(sys.argv[7])
     database_init()
 
 
-    job_id = int(os.getenv('SLURM_JOB_ID', -1))
+    # if the env var SLURM_JOB_ID isn't defined return error
+    job_id : int = int(os.getenv('SLURM_JOB_ID', -1))
     if job_id == -1:
         print("Job id not found")
         sys.exit(1)
 
 
     #check to which project the user belongs
-    
-    project_list = execute_query("SELECT progetto_id FROM Progetto_Utenti WHERE user_id = %s", (user_id,)) 
+    project_list : List = execute_query("SELECT progetto_id FROM Progetto_Utenti WHERE user_id = %s", (user_id)) 
     if len(project_list) == 0:
         print("Utente non autorizzato")
         sys.exit(1)
     print("Inserisci l'id del progetto")
-    
+   
+
     #select the project, make sure the project is valid
-    progetto_id = int(input())
+    progetto_id : str = str(input())
 
     if progetto_id not in project_list:
         print("Progetto non valido")
@@ -179,7 +182,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # job detail file creation
-    file_name = "job_" + str(job_id) + ".txt"
+    file_name : str  = "job_" + str(job_id) + ".txt"
     try:
         file = open(file_name, "x")
     except FileExistsError:
@@ -195,7 +198,7 @@ if __name__ == "__main__":
         json.dump(job_data,file,indent=4)
 
     job_c = job_cost(time_limit, num_gpu, num_cpu)
-    result, msg = job_submit_filter(job_c, user_id, progetto_id, job_id)
+    result, msg = job_submit_filter(job_c, progetto_id, str(job_id))
     if not result:
         print(msg)
         sys.exit(1)
