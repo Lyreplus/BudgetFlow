@@ -1,8 +1,8 @@
 import os
 
 
-def get_env_var_int(var_name):
-    
+def get_env_var_int(var_name) -> int | None:
+
     try:
         value = os.getenv(var_name)
         if value is None:
@@ -13,3 +13,13 @@ def get_env_var_int(var_name):
         print(f"Non posso convertire la variabile di ambiente '{var_name}'")
         return None
 
+
+def job_cost(
+    time_limit: int,
+    num_gpu: int,
+    num_cpu: int,
+    gpu_coefficient: float = 100.0,
+    cpu_coefficient: float = 10.0,
+) -> float:
+    job_cost = time_limit * (num_gpu * gpu_coefficient + num_cpu * cpu_coefficient)
+    return job_cost
