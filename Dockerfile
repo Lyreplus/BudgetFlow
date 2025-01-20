@@ -8,4 +8,4 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-CMD ["python", "prolog.py"]
+CMD ["python", "budgetflow/prolog.py"]
