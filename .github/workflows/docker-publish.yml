@@ -23,7 +23,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: lyreplus
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push container image
@@ -32,4 +32,4 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/${{ github.repository }}:latest,ghcr.io/${{ github.repository }}:${{ github.sha }}
+          tags: ghcr.io/lyreplus/budgetflow:latest,ghcr.io/lyreplus/budgetflow:${{ github.sha }}
