@@ -21,7 +21,7 @@ To install BudgetFlow, you need to clone the repository and run the setup script
 git clone https://github.com/Lyreplus/BudgetFlow.git
 cd BudgetFlow
 pip install -r requirements.txt
-lua job_submit.lua
+lua lua/job_submit.lua
 ```
 
 Note: BudgetFlow requires Python 3.10 or higher.
@@ -29,7 +29,7 @@ Prolog.py has to be launched via job_submit.lua script.
 
 ### Docker
 
-You can setup the necessary environment for BudgetFlow, alongside a PostgreSQL database, using the 'compose.yml' file, inside 'test_compose' folder.
+You can setup the necessary environment for BudgetFlow, alongside a PostgreSQL database, using the <code>compose.yml</code> file, inside <code>test_compose</code> folder.
 
 ```bash
 docker compose pull && docker compose up
