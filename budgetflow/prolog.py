@@ -12,16 +12,11 @@ import json
 from typing import List, Tuple
 
 
-def slurm_init():
-    """Initialize the Slurm API.
-
-    This function must be called first before certain RPC functions can be
-    executed. slurm_init is automatically called when the pyslurm module is
-    loaded.
-    """
+def slurm_init() -> None:
+    return
 
 
-def slurm_fini():
+def slurm_fini() -> None:
     return
 
 
