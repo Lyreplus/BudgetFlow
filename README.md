@@ -27,9 +27,10 @@ lua lua/job_submit.lua
 Note: BudgetFlow requires Python 3.10 or higher.
 Prolog.py has to be launched via job_submit.lua script.
 
-### Docker
+### Docker compose
 
-You can setup the necessary environment for BudgetFlow, alongside a PostgreSQL database, using the <code>compose.yml</code> file, inside <code>test_compose</code> folder.
+You can setup the necessary environment for BudgetFlow, alongside a PostgreSQL database, using the <code>compose.yml</code> file. You'll only need to create the folder <code>./test_compose/data/</code> to store the database.
+For the following environment variables, you'll have to store them in a file called <code>budgetflow-database.env</code>, into the folder <code>./test_compose/env/</code>.
 
 ```bash
 docker compose pull && docker compose up
@@ -38,14 +39,14 @@ docker compose pull && docker compose up
 ## Configuration
 
 BudgetFlow requires a PostgreSQL database to store the budget information.
-You need to set the following environment variables to configure the database connection:
+You need to set the following environment variables, to configure the database connection:
 
 ```bash
 DB_NAME=database_name
 DB_USER=database_user
 DB_PASSWORD=database_password
 DB_HOST=database_host
-DB_PORT=database_port
+DB_PORT=database_port (default=5432)
 POSTGRES_PASSWORD=postgres_password
 ```
 
