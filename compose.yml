@@ -1,0 +1,28 @@
+services:
+  prolog:
+    container_name: prolog
+    hostname: prolog
+    image: "ghcr.io/lyreplus/budgetflow:latest"
+    depends_on:
+      - budgetflow-database
+    env_file:
+      - ./test_compose/env/budgetflow-database.env
+    restart: on-failure
+
+  budgetflow-database:
+    container_name: budgetflow-database
+    hostname: budgetflow-database
+    image: "postgres"
+    env_file:
+      - ./test_compose/env/budgetflow-database.env
+    volumes:
+      - ./test_compose/data/budgetflow-database:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  default:
+
