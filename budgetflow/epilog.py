@@ -11,8 +11,13 @@ def get_job_id() -> int:
     job_id_slurm = os.getenv("SLURM_JOB_ID")
     query = "SELECT job_id FROM Job WHERE job_id_slurm = %s"
     job_id = dbutil.execute_query(query, (job_id_slurm,))
+
+    if job_id is None:
+        return -1
+
     if len(job_id) == 0:
         return -1
+
     return job_id[0][0]
 
 

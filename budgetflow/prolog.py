@@ -1,4 +1,5 @@
 from utils.database_utils import (
+    create_database,
     find_progetto_by_id,
     is_user_in_project,
     execute_query,
@@ -7,9 +8,10 @@ from utils.database_utils import (
 from utils.utils import job_cost
 import sys
 import psycopg2
+from psycopg2 import sql
 import os
 import json
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 
 def slurm_init() -> None:
@@ -34,18 +36,27 @@ def job_submit_filter(
 ) -> Tuple[bool, str]:
     # enough budget ?
     query: str = "SELECT * FROM Budget WHERE progetto_id = %s AND tempo_fine IS NULL"
-    records: List = execute_query(query, progetto_id)
-    if len(records) == 0:
+    records: Optional[List] = execute_query(query, progetto_id)
+    if records is None or len(records) == 0:
         return False, "Project has no budget"
     budget: float = float(records[0][2])
 
     if budget < job_cost:
         return False, "Project has not enough budget"
     else:
+        # check if the job isn't in the db
+        query = "SELECT * FROM Job WHERE job_id = %s"
+        job_ids = execute_query(query, (job_id))
+        if job_ids is not None:
+            if len(job_ids) != 0:
+                return (
+                    False,
+                    "Another job with the same id is present into the database",
+                )
 
         # add job to database
-        query = "INSERT INTO Job (costo_submit, job_id_slurm) VALUES (%s, %s) RETURNING job_id"
-        job_id = execute_query(query, (time_limit, job_id))[0][0]
+        query = "INSERT INTO Job (costo_submit, job_id_slurm) VALUES (%s, %s)"
+        execute_query(query, (time_limit, job_id), False)
         return True, ""
 
 
@@ -62,6 +73,7 @@ if __name__ == "__main__":
     cpus_per_task: int = int(sys.argv[5])
     num_gpu: int = int(sys.argv[6])
     num_cpu: int = int(sys.argv[7])
+    create_database()
     database_init()
 
     # if the env var SLURM_JOB_ID isn't defined return error
@@ -71,9 +83,13 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # check to which project the user belongs
-    project_list: List = execute_query(
-        "SELECT progetto_id FROM Progetto_Utenti WHERE user_id = %s", (user_id)
+    project_list: Optional[List] = execute_query(
+        "SELECT progetto_id FROM Progetto_Utenti WHERE user_id = %s",
+        (user_id),
     )
+    if project_list is None:
+        print("L'utente non fa parte di alcun progetto")
+        sys.exit(1)
     if len(project_list) == 0:
         print("Utente non autorizzato")
         sys.exit(1)
@@ -86,7 +102,10 @@ if __name__ == "__main__":
         print("Progetto non valido")
         sys.exit(1)
 
-    progetto = find_progetto_by_id(progetto_id)
+    progetto: Optional[List[Tuple]] = find_progetto_by_id(progetto_id)
+    if progetto is None:
+        print(f"Non esiste alcun progetto con l'id {progetto_id}")
+        sys.exit(1)
     if not is_user_in_project(user_id, progetto_id):
         print("Utente non autorizzato")
         sys.exit(1)
