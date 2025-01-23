@@ -33,6 +33,10 @@ You can setup the necessary environment for BudgetFlow, alongside a PostgreSQL d
 For the following environment variables, you'll have to store them in a file called <code>budgetflow-database.env</code>, into the folder <code>./test_compose/env/</code>.
 
 ```bash
+mkdir budgetflow; cd budgetflow
+curl -H 'Accept: application/vnd.github.v3.raw' -O -L https://api.github.com/repos/Lyreplus/budgetflow/contents/compose.yml
+mkdir -p test_compose/env test_compose/data
+touch test_compose/env/budgetflow-database.env; vim $_
 docker compose pull && docker compose up
 ```
 
